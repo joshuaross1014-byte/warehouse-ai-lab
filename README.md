@@ -9,6 +9,21 @@ WMS on SQL Server) plus an RPA fleet. This is a **sanitized reference version** 
 all endpoints, credentials, identifiers, and business data have been removed;
 schema/object names shown are vendor-standard.
 
+## Context & my role
+
+I designed, built, and deployed this tooling to run against live production
+systems in a multi-region retail/distribution operation. The work took recurring,
+manual integration investigations — the kind that previously meant ad-hoc SQL
+across two systems every time a ticket landed — and turned them into repeatable
+one-command playbooks plus always-on monitors that surface problems before users
+report them. In practice it has caught real issues: stranded serialized inventory
+blocking ERP receipts, orders that silently failed to reach the warehouse floor,
+and price-list propagation gaps that would otherwise ship as blank-priced orders.
+
+This public repository is a sanitized reference of that work — the architecture and
+engineering patterns, with all proprietary endpoints, credentials, identifiers, and
+data removed.
+
 ## Architecture
 
 ```mermaid
