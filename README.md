@@ -96,7 +96,11 @@ claude mcp add warehouse_twin -s user -- python /path/to/twin_mcp_server.py
 - [x] **Multi-day runs with order carryover** — saturation compounds: over 5 days the
       baseline FROZEN bottleneck grows a 180-order backlog and on-time falls to ~88%,
       dynamics a single-day view hides entirely
-- [ ] Automation modules: model a GTP/AMR zone (rate, capex) → payback analysis
+- [x] **GTP automation module + payback economics** — `evaluate_gtp_automation` simulates a
+      goods-to-person zone (stations, rate, SKU coverage) with revised staffing and returns
+      the business case. First findings: at current volume an oversized 2-station system is a
+      9.5-year payback (19% utilized — does not pencil), while a right-sized single station
+      saves 2 positions for a 3.6-year payback with service *improving*
 - [ ] Waveless / order-streaming release mode (compare against wave-based)
 - [ ] Slotting module: zone-share shifts from re-slotting decisions
 - [ ] Browser dashboard with live scenario comparison

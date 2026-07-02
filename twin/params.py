@@ -35,6 +35,7 @@ class SimParams:
     order_cutoff_hr: int           # orders arriving before this...
     ship_cutoff_hr: int            # ...should complete by this (same day)
     sim_days: int                  # consecutive days simulated; work carries over
+    automation: dict               # optional GTP zone: enabled/stations/rate_lph/line_coverage
     random_seed: int
     raw: dict = field(repr=False, default_factory=dict)
 
@@ -60,6 +61,7 @@ class SimParams:
             order_cutoff_hr=int(d["order_cutoff_hr"]),
             ship_cutoff_hr=int(d["ship_cutoff_hr"]),
             sim_days=int(d.get("sim_days", 1)),
+            automation=d.get("automation") or {"enabled": False},
             random_seed=int(d.get("random_seed", 42)),
             raw=d,
         )

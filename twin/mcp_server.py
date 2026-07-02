@@ -105,5 +105,45 @@ def sweep_twin_parameter(param_path: str, values: str, replications: int = 5) ->
     }
 
 
+@mcp.tool()
+def evaluate_gtp_automation(stations: int, rate_lph: float, line_coverage: float,
+                            revised_pickers: str, capex_usd: float,
+                            wage_usd_hr: float = 22.0, opex_usd_yr: float = 0.0,
+                            replications: int = 10) -> dict:
+    """Full automation business case: simulate a goods-to-person (GTP) zone with
+    revised conventional staffing, compare service vs. baseline, and compute
+    labor-savings payback on the capex.
+
+    Args:
+        stations: staffed GTP pick stations.
+        rate_lph: lines per station-hour (typical GTP: 300-700).
+        line_coverage: fraction of all lines the automated system covers (SKU
+                       coverage), e.g. 0.45.
+        revised_pickers: JSON object of conventional staffing AFTER automation,
+                         e.g. '{"DRY": 2, "COOLER": 1, "FROZEN": 1}'.
+        capex_usd: installed cost of the system.
+        wage_usd_hr / opex_usd_yr: economics assumptions.
+        replications: seeds per scenario.
+    """
+    from twin.economics import payback_analysis
+
+    p = _params()
+    baseline = run_scenario(p, replications=replications)
+    overrides: dict = {
+        "automation.enabled": True,
+        "automation.stations": stations,
+        "automation.rate_lph": rate_lph,
+        "automation.line_coverage": line_coverage,
+    }
+    for zone, n in json.loads(revised_pickers).items():
+        overrides[f"zones.{zone}.pickers"] = n
+    scenario = run_scenario(p, overrides, replications=replications)
+
+    shift_hours = p.pick_shift_end_hr - p.pick_shift_start_hr
+    econ = payback_analysis(baseline, scenario, capex_usd, wage_usd_hr,
+                            opex_usd_yr, shift_hours=shift_hours)
+    return {"baseline": baseline, "scenario": scenario, "business_case": econ}
+
+
 if __name__ == "__main__":
     mcp.run()

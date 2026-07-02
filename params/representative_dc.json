@@ -13,6 +13,13 @@
     "COOLER": { "share": 0.30, "pickers": 2, "pick_rate_lph": 55 },
     "FROZEN": { "share": 0.15, "pickers": 1, "pick_rate_lph": 45 }
   },
+  "automation": {
+    "_comment": "Optional goods-to-person zone. When enabled, `line_coverage` of all order lines route to GTP pick stations instead of conventional zones (models SKU coverage of the automated system).",
+    "enabled": false,
+    "stations": 2,
+    "rate_lph": 350,
+    "line_coverage": 0.45
+  },
   "wave_interval_min": 30,
   "pick_shift": { "start_hr": 6, "end_hr": 22 },
   "order_cutoff_hr": 14,

@@ -66,6 +66,13 @@ class WarehouseSim:
             name: ZoneState(name, z.pickers, 60.0 / z.pick_rate_lph)
             for name, z in params.zones.items()
         }
+        # optional goods-to-person zone: `line_coverage` of lines route here
+        auto = params.automation
+        self.gtp_coverage = 0.0
+        if auto.get("enabled"):
+            self.gtp_coverage = float(auto["line_coverage"])
+            self.zones["GTP"] = ZoneState(
+                "GTP", int(auto["stations"]), 60.0 / float(auto["rate_lph"]))
         self.unreleased: deque[Order] = deque()
         self.waves_released = 0
 
@@ -96,7 +103,10 @@ class WarehouseSim:
                 arrival = day * MIN_PER_DAY + hr * 60 + self.rng.uniform(0, 60)
                 lines_by_zone: dict[str, int] = {}
                 for _ in range(self._sample_lines()):
-                    z = self.rng.choices(zone_names, weights=zone_weights)[0]
+                    if self.gtp_coverage and self.rng.random() < self.gtp_coverage:
+                        z = "GTP"   # line's SKU is covered by the automated system
+                    else:
+                        z = self.rng.choices(zone_names, weights=zone_weights)[0]
                     lines_by_zone[z] = lines_by_zone.get(z, 0) + 1
                 o = Order(oid, arrival, lines_by_zone)
                 o.remaining = o.total_lines
