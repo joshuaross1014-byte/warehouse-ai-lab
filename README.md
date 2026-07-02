@@ -93,7 +93,9 @@ claude mcp add warehouse_twin -s user -- python /path/to/twin_mcp_server.py
       assistant designs and runs experiments conversationally. First real result: sweeping
       FROZEN pickers 1→2→3 shows 2 is optimal (109→78→81 min avg cycle) — the third picker
       buys nothing because the bottleneck moves.
-- [ ] Multi-day runs and order carryover
+- [x] **Multi-day runs with order carryover** — saturation compounds: over 5 days the
+      baseline FROZEN bottleneck grows a 180-order backlog and on-time falls to ~88%,
+      dynamics a single-day view hides entirely
 - [ ] Automation modules: model a GTP/AMR zone (rate, capex) → payback analysis
 - [ ] Waveless / order-streaming release mode (compare against wave-based)
 - [ ] Slotting module: zone-share shifts from re-slotting decisions

@@ -56,6 +56,8 @@ class WarehouseSim:
     def __init__(self, params: SimParams):
         self.p = params
         self.rng = random.Random(params.random_seed)
+        # horizon: all simulated days + 6h spillover to let queues drain
+        self.horizon_min = (params.sim_days * 24 + 6) * 60
         self.now = 0.0
         self._events: list = []
         self._seq = 0
@@ -87,24 +89,27 @@ class WarehouseSim:
     def _generate_orders(self):
         zone_names = list(self.p.zones)
         zone_weights = [self.p.zones[z].share for z in zone_names]
-        for oid in range(self.p.orders_per_day):
-            hr = self.rng.choices(range(24), weights=self.p.arrival_weights_by_hour)[0]
-            arrival = hr * 60 + self.rng.uniform(0, 60)
-            lines_by_zone: dict[str, int] = {}
-            for _ in range(self._sample_lines()):
-                z = self.rng.choices(zone_names, weights=zone_weights)[0]
-                lines_by_zone[z] = lines_by_zone.get(z, 0) + 1
-            o = Order(oid, arrival, lines_by_zone)
-            o.remaining = o.total_lines
-            self.orders.append(o)
-            self._push(arrival, self._on_arrival, o)
+        oid = 0
+        for day in range(self.p.sim_days):
+            for _ in range(self.p.orders_per_day):
+                hr = self.rng.choices(range(24), weights=self.p.arrival_weights_by_hour)[0]
+                arrival = day * MIN_PER_DAY + hr * 60 + self.rng.uniform(0, 60)
+                lines_by_zone: dict[str, int] = {}
+                for _ in range(self._sample_lines()):
+                    z = self.rng.choices(zone_names, weights=zone_weights)[0]
+                    lines_by_zone[z] = lines_by_zone.get(z, 0) + 1
+                o = Order(oid, arrival, lines_by_zone)
+                o.remaining = o.total_lines
+                self.orders.append(o)
+                self._push(arrival, self._on_arrival, o)
+                oid += 1
 
     def _on_arrival(self, order: Order):
         self.unreleased.append(order)
 
     # ---- wave release ----------------------------------------------------
     def _schedule_waves(self):
-        horizon = self.p.sim_horizon_hr * 60
+        horizon = self.horizon_min
         day = 0
         while day * MIN_PER_DAY < horizon:
             t = day * MIN_PER_DAY + self.p.pick_shift_start_hr * 60
@@ -150,7 +155,7 @@ class WarehouseSim:
 
     def _schedule_shift_starts(self):
         """Kick idle pickers at each shift start (work left from yesterday)."""
-        horizon = self.p.sim_horizon_hr * 60
+        horizon = self.horizon_min
         day = 0
         while True:
             t = day * MIN_PER_DAY + self.p.pick_shift_start_hr * 60
@@ -168,7 +173,7 @@ class WarehouseSim:
         self._generate_orders()
         self._schedule_waves()
         self._schedule_shift_starts()
-        horizon = self.p.sim_horizon_hr * 60
+        horizon = self.horizon_min
         while self._events:
             t, _, fn, args = heapq.heappop(self._events)
             if t > horizon:
@@ -181,21 +186,27 @@ class WarehouseSim:
         done = [o for o in self.orders if o.done_min is not None]
         cyc_arr = [o.done_min - o.arrival_min for o in done]
         cyc_rel = [o.done_min - o.released_min for o in done if o.released_min is not None]
+        # cutoffs are per-day: an order arriving before the order cutoff on day d
+        # should complete by the ship cutoff of the SAME day d
         cutoff_arr = self.p.order_cutoff_hr * 60
         cutoff_ship = self.p.ship_cutoff_hr * 60
-        eligible = [o for o in self.orders if o.arrival_min <= cutoff_arr]
-        ontime = [o for o in eligible if o.done_min is not None and o.done_min <= cutoff_ship]
-        shift_min = (self.p.pick_shift_end_hr - self.p.pick_shift_start_hr) * 60
+        eligible = [o for o in self.orders
+                    if (o.arrival_min % MIN_PER_DAY) <= cutoff_arr]
+        ontime = [o for o in eligible if o.done_min is not None
+                  and o.done_min <= (o.arrival_min // MIN_PER_DAY) * MIN_PER_DAY + cutoff_ship]
+        shift_min = (self.p.pick_shift_end_hr - self.p.pick_shift_start_hr) * 60 * self.p.sim_days
 
         def p90(xs):
             return sorted(xs)[int(0.9 * (len(xs) - 1))] if xs else None
 
         return {
             "site": self.p.site_name,
+            "days_simulated": self.p.sim_days,
             "orders": {
                 "arrived": len(self.orders),
                 "completed": len(done),
                 "completion_pct": round(100 * len(done) / max(1, len(self.orders)), 1),
+                "backlog_at_horizon": len(self.orders) - len(done),
             },
             "lines": {
                 "total": sum(o.total_lines for o in self.orders),
@@ -264,9 +275,11 @@ def _aggregate(reports: list[dict]) -> dict:
         }
     return {
         "site": reports[0]["site"],
+        "days_simulated": reports[0].get("days_simulated", 1),
         "replications": len(reports),
         "orders_arrived": stat([r["orders"]["arrived"] for r in reports]),
         "completion_pct": stat([r["orders"]["completion_pct"] for r in reports]),
+        "backlog_at_horizon": stat([r["orders"]["backlog_at_horizon"] for r in reports]),
         "on_time_pct": stat([r["service_level"]["on_time_pct"] for r in reports]),
         "cycle_avg_min": stat([r["cycle_time_min"]["arrival_to_complete_avg"] for r in reports]),
         "cycle_p90_min": stat([r["cycle_time_min"]["arrival_to_complete_p90"] for r in reports]),

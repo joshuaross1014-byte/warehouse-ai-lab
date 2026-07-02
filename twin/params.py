@@ -33,8 +33,8 @@ class SimParams:
     pick_shift_start_hr: int
     pick_shift_end_hr: int
     order_cutoff_hr: int           # orders arriving before this...
-    ship_cutoff_hr: int            # ...should complete by this
-    sim_horizon_hr: int
+    ship_cutoff_hr: int            # ...should complete by this (same day)
+    sim_days: int                  # consecutive days simulated; work carries over
     random_seed: int
     raw: dict = field(repr=False, default_factory=dict)
 
@@ -59,7 +59,7 @@ class SimParams:
             pick_shift_end_hr=int(d["pick_shift"]["end_hr"]),
             order_cutoff_hr=int(d["order_cutoff_hr"]),
             ship_cutoff_hr=int(d["ship_cutoff_hr"]),
-            sim_horizon_hr=int(d.get("sim_horizon_hr", 30)),
+            sim_days=int(d.get("sim_days", 1)),
             random_seed=int(d.get("random_seed", 42)),
             raw=d,
         )

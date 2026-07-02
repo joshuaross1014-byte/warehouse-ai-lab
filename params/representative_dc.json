@@ -17,6 +17,6 @@
   "pick_shift": { "start_hr": 6, "end_hr": 22 },
   "order_cutoff_hr": 14,
   "ship_cutoff_hr": 18,
-  "sim_horizon_hr": 30,
+  "sim_days": 1,
   "random_seed": 42
 }
