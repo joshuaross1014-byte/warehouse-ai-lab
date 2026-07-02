@@ -19,7 +19,8 @@ from typing import Any
 class ZoneParams:
     share: float          # fraction of order lines routed to this zone
     pickers: int          # picker headcount during the pick shift
-    pick_rate_lph: float  # sustained lines per picker-hour
+    pick_rate_lph: float  # sustained BLENDED lines per picker-hour (at current slotting)
+    slotting: dict | None = None  # ABC slotting: a_lines_share / prime_rate_multiplier / prime_coverage
 
 
 @dataclass

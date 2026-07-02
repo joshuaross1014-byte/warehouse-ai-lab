@@ -105,7 +105,11 @@ claude mcp add warehouse_twin -s user -- python /path/to/twin_mcp_server.py
       on arrival instead of batched waves. Finding: waveless cuts avg cycle 116 -> 97 min at
       baseline, but the benefit shrinks under +20% growth (153 -> 145) — release discipline
       matters most when capacity has headroom; at saturation, capacity is the constraint
-- [ ] Slotting module: zone-share shifts from re-slotting decisions
+- [x] **Slotting module (ABC velocity)** — per-zone `slotting` config: A-movers picked from
+      prime slots run ~35% faster; `prime_coverage` is the re-slotting knob (blended rate is
+      anchored at calibration coverage, so gains are relative to today). Finding: re-slotting
+      FROZEN 0.5 -> 0.85 halves its end-of-day queue and cuts cycle ~9 min for zero headcount —
+      but at 92% utilization it delays the extra hire rather than replacing it
 - [ ] Browser dashboard with live scenario comparison
 
 ## Author

@@ -42,14 +42,34 @@ class Order:
 class ZoneState:
     name: str
     pickers: int
-    mean_service_min: float
+    mean_service_min: float               # blended mean at CALIBRATION slotting
+    slotting: dict | None = None          # ABC slotting config (None = uniform)
     queue: deque = field(default_factory=deque)   # one entry per line: Order ref
     idle: int = 0
     busy_min: float = 0.0
     lines_picked: int = 0
+    prime_picks: int = 0
+    # derived service times
+    base_service_min: float = 0.0         # non-prime pick
+    prime_service_min: float = 0.0        # prime-slotted pick
+    prime_hit_prob: float = 0.0           # P(line is A-mover AND slotted prime)
 
     def __post_init__(self):
         self.idle = self.pickers
+        if self.slotting:
+            a = float(self.slotting["a_lines_share"])
+            m = float(self.slotting["prime_rate_multiplier"])
+            cov = float(self.slotting["prime_coverage"])
+            cal = float(self.slotting.get("calibration_coverage", cov))
+            # Anchor: the configured blended rate holds at CALIBRATION coverage,
+            # so changing prime_coverage yields gains/losses relative to today
+            # instead of silently recalibrating the baseline.
+            f_cal = a * cal
+            self.base_service_min = self.mean_service_min / (1 - f_cal + f_cal / m)
+            self.prime_service_min = self.base_service_min / m
+            self.prime_hit_prob = a * cov
+        else:
+            self.base_service_min = self.prime_service_min = self.mean_service_min
 
 
 class WarehouseSim:
@@ -63,7 +83,7 @@ class WarehouseSim:
         self._seq = 0
         self.orders: list[Order] = []
         self.zones = {
-            name: ZoneState(name, z.pickers, 60.0 / z.pick_rate_lph)
+            name: ZoneState(name, z.pickers, 60.0 / z.pick_rate_lph, z.slotting)
             for name, z in params.zones.items()
         }
         # optional goods-to-person zone: `line_coverage` of lines route here
@@ -160,7 +180,12 @@ class WarehouseSim:
         while z.idle > 0 and z.queue and self._in_shift(self.now):
             order = z.queue.popleft()
             z.idle -= 1
-            dur = self.rng.expovariate(1.0 / z.mean_service_min)
+            if z.prime_hit_prob and self.rng.random() < z.prime_hit_prob:
+                mean = z.prime_service_min       # A-mover picked from a prime slot
+                z.prime_picks += 1
+            else:
+                mean = z.base_service_min
+            dur = self.rng.expovariate(1.0 / mean)
             self._push(self.now + dur, self._on_line_done, z, order, dur)
 
     def _on_line_done(self, z: ZoneState, order: Order, dur: float):
@@ -248,6 +273,7 @@ class WarehouseSim:
                     "lines_picked": z.lines_picked,
                     "queue_remaining": len(z.queue),
                     "utilization_pct": round(100 * z.busy_min / (z.pickers * shift_min), 1),
+                    "prime_pick_pct": round(100 * z.prime_picks / max(1, z.lines_picked), 1),
                 }
                 for z in self.zones.values()
             },
@@ -291,6 +317,7 @@ def _aggregate(reports: list[dict]) -> dict:
             "utilization_pct": stat([r["zones"][zname]["utilization_pct"] for r in reports]),
             "queue_remaining": stat([r["zones"][zname]["queue_remaining"] for r in reports]),
             "lines_picked": stat([r["zones"][zname]["lines_picked"] for r in reports]),
+            "prime_pick_pct": stat([r["zones"][zname].get("prime_pick_pct") for r in reports]),
         }
     return {
         "site": reports[0]["site"],

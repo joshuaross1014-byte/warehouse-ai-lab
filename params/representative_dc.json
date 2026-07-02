@@ -9,9 +9,12 @@
     0.073, 0.052, 0.048, 0.027, 0.014, 0.010, 0.063, 0.042
   ],
   "zones": {
-    "DRY":    { "share": 0.55, "pickers": 4, "pick_rate_lph": 70 },
-    "COOLER": { "share": 0.30, "pickers": 2, "pick_rate_lph": 55 },
-    "FROZEN": { "share": 0.15, "pickers": 1, "pick_rate_lph": 45 }
+    "DRY":    { "share": 0.55, "pickers": 4, "pick_rate_lph": 70,
+                "slotting": { "a_lines_share": 0.65, "prime_rate_multiplier": 1.35, "prime_coverage": 0.5, "calibration_coverage": 0.5 } },
+    "COOLER": { "share": 0.30, "pickers": 2, "pick_rate_lph": 55,
+                "slotting": { "a_lines_share": 0.65, "prime_rate_multiplier": 1.35, "prime_coverage": 0.5, "calibration_coverage": 0.5 } },
+    "FROZEN": { "share": 0.15, "pickers": 1, "pick_rate_lph": 45,
+                "slotting": { "a_lines_share": 0.65, "prime_rate_multiplier": 1.35, "prime_coverage": 0.5, "calibration_coverage": 0.5 } }
   },
   "automation": {
     "_comment": "Optional goods-to-person zone. When enabled, `line_coverage` of all order lines route to GTP pick stations instead of conventional zones (models SKU coverage of the automated system).",
