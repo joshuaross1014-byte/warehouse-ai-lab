@@ -101,7 +101,10 @@ claude mcp add warehouse_twin -s user -- python /path/to/twin_mcp_server.py
       the business case. First findings: at current volume an oversized 2-station system is a
       9.5-year payback (19% utilized — does not pencil), while a right-sized single station
       saves 2 positions for a 3.6-year payback with service *improving*
-- [ ] Waveless / order-streaming release mode (compare against wave-based)
+- [x] **Waveless / order-streaming mode** — `{"release_mode": "waveless"}` releases orders
+      on arrival instead of batched waves. Finding: waveless cuts avg cycle 116 -> 97 min at
+      baseline, but the benefit shrinks under +20% growth (153 -> 145) — release discipline
+      matters most when capacity has headroom; at saturation, capacity is the constraint
 - [ ] Slotting module: zone-share shifts from re-slotting decisions
 - [ ] Browser dashboard with live scenario comparison
 

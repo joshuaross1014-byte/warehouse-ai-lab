@@ -115,10 +115,29 @@ class WarehouseSim:
                 oid += 1
 
     def _on_arrival(self, order: Order):
-        self.unreleased.append(order)
+        if self.p.release_mode == "waveless":
+            # order streaming: release straight to the floor on arrival;
+            # lines queue and pickers pull them as capacity frees up
+            self._release_order(order)
+        else:
+            self.unreleased.append(order)
+
+    def _release_order(self, order: Order):
+        order.released_min = self.now
+        if order.remaining == 0:
+            order.done_min = self.now
+            return
+        for zone_name, n in order.lines_by_zone.items():
+            zq = self.zones[zone_name]
+            for _ in range(n):
+                zq.queue.append(order)
+        for zone_name in order.lines_by_zone:
+            self._dispatch(self.zones[zone_name])
 
     # ---- wave release ----------------------------------------------------
     def _schedule_waves(self):
+        if self.p.release_mode != "wave":
+            return
         horizon = self.horizon_min
         day = 0
         while day * MIN_PER_DAY < horizon:
@@ -134,17 +153,7 @@ class WarehouseSim:
             return
         self.waves_released += 1
         while self.unreleased:
-            order = self.unreleased.popleft()
-            order.released_min = self.now
-            if order.remaining == 0:          # degenerate zero-line order
-                order.done_min = self.now
-                continue
-            for zone_name, n in order.lines_by_zone.items():
-                zq = self.zones[zone_name]
-                for _ in range(n):
-                    zq.queue.append(order)
-            for zone_name in order.lines_by_zone:
-                self._dispatch(self.zones[zone_name])
+            self._release_order(self.unreleased.popleft())
 
     # ---- picking ----------------------------------------------------------
     def _dispatch(self, z: ZoneState):

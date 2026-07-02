@@ -29,6 +29,7 @@ class SimParams:
     lines_per_order: dict          # {distribution, mean, sigma, min, max}
     arrival_weights_by_hour: list  # 24 floats, normalized internally
     zones: dict[str, ZoneParams]
+    release_mode: str              # "wave" (batch on a cadence) | "waveless" (release on arrival)
     wave_interval_min: int
     pick_shift_start_hr: int
     pick_shift_end_hr: int
@@ -55,6 +56,7 @@ class SimParams:
             lines_per_order=d["lines_per_order"],
             arrival_weights_by_hour=[w / total for w in weights],
             zones=zones,
+            release_mode=d.get("release_mode", "wave"),
             wave_interval_min=int(d["wave_interval_min"]),
             pick_shift_start_hr=int(d["pick_shift"]["start_hr"]),
             pick_shift_end_hr=int(d["pick_shift"]["end_hr"]),

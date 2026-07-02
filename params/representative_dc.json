@@ -20,6 +20,7 @@
     "rate_lph": 350,
     "line_coverage": 0.45
   },
+  "release_mode": "wave",
   "wave_interval_min": 30,
   "pick_shift": { "start_hr": 6, "end_hr": 22 },
   "order_cutoff_hr": 14,
