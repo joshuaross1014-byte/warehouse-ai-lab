@@ -1,0 +1,33 @@
+{
+  "_comment": "Representative mid-size grocery DC. Parameters derived from a real multi-site operation: order volume, lines-per-order, wave cadence, and the 24h arrival shape are statistically grounded (normalized/rounded); pick rates are set from operator-day counts + industry benchmarks because source transaction timestamps are date-grain (see README calibration notes).",
+  "site_name": "DC-EAST (representative)",
+  "orders_per_day": 480,
+  "lines_per_order": { "distribution": "lognormal", "mean": 11.0, "sigma": 0.6, "min": 1, "max": 80 },
+  "arrival_weights_by_hour": [
+    0.025, 0.013, 0.005, 0.048, 0.005, 0.006, 0.015, 0.016,
+    0.034, 0.045, 0.043, 0.110, 0.070, 0.074, 0.088, 0.085,
+    0.073, 0.052, 0.048, 0.027, 0.014, 0.010, 0.063, 0.042
+  ],
+  "zones": {
+    "DRY":    { "share": 0.55, "pickers": 4, "pick_rate_lph": 70,
+                "slotting": { "a_lines_share": 0.65, "prime_rate_multiplier": 1.35, "prime_coverage": 0.5, "calibration_coverage": 0.5 } },
+    "COOLER": { "share": 0.30, "pickers": 2, "pick_rate_lph": 55,
+                "slotting": { "a_lines_share": 0.65, "prime_rate_multiplier": 1.35, "prime_coverage": 0.5, "calibration_coverage": 0.5 } },
+    "FROZEN": { "share": 0.15, "pickers": 1, "pick_rate_lph": 45,
+                "slotting": { "a_lines_share": 0.65, "prime_rate_multiplier": 1.35, "prime_coverage": 0.5, "calibration_coverage": 0.5 } }
+  },
+  "automation": {
+    "_comment": "Optional goods-to-person zone. When enabled, `line_coverage` of all order lines route to GTP pick stations instead of conventional zones (models SKU coverage of the automated system).",
+    "enabled": false,
+    "stations": 2,
+    "rate_lph": 350,
+    "line_coverage": 0.45
+  },
+  "release_mode": "wave",
+  "wave_interval_min": 30,
+  "pick_shift": { "start_hr": 6, "end_hr": 22 },
+  "order_cutoff_hr": 14,
+  "ship_cutoff_hr": 18,
+  "sim_days": 1,
+  "random_seed": 42
+}
