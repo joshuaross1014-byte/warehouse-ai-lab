@@ -1,0 +1,21 @@
+# Secrets & local config — NEVER commit
+.env
+*.env
+!.env.example
+
+# Monitor runtime artifacts
+logs/
+*.log
+*_state.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

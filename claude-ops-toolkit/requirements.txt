@@ -1,0 +1,13 @@
+# WMS (SQL Server) — wms_connect
+sqlalchemy>=2.0
+pyodbc>=5.0
+pandas>=2.0
+
+# ERP / SAP B1 (SAP HANA) — hana_connect
+hdbcli>=2.19
+
+# RPA control-room REST + Slack alerting
+requests>=2.31
+
+# Config loading (.env)
+python-dotenv>=1.0
