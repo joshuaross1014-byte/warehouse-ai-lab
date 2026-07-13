@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+*.sqlite
+graph.json
+private/
+.venv/
