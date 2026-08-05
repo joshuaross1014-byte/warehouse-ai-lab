@@ -4,6 +4,7 @@ AI applied to warehouse and ERP operations — a portfolio of self-contained pro
 
 | Project | What it is |
 |---|---|
+| [ai-ops-playbook](ai-ops-playbook/) | **Start here.** How to give an AI assistant real access to production systems and keep it safe: the MCP server pattern (full source), the layered safety model, the automation pipeline, an eight-layer memory architecture, and the operational discipline that catches silent failure. |
 | [warehouse-twin](warehouse-twin/) | Digital twin of a grocery distribution center: zero-dependency discrete-event simulation grounded in real WMS operating statistics, with an AI scenario copilot on the roadmap. |
 | [warehouse-aiops](warehouse-aiops/) | Self-healing warehouse operations with a human in the loop: detect → diagnose → propose → approve → execute → verify → runbook. Mock WMS included, AI console via MCP. |
 | [sql-codebase-mcp](sql-codebase-mcp/) | Ask an AI "what breaks if I change this table?" Parses any SQL Server codebase into a dependency graph (calls/reads/writes) and serves it over MCP for instant impact analysis. |
