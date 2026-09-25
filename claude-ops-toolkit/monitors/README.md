@@ -10,7 +10,7 @@ logging) only when something trips. Exit code: `0`=clean, `1`=alert.
 | Script | Checks | Source | Suggested schedule |
 |---|---|---|---|
 | `monitor_wms_import_errors.py` | real (non-benign) order-import errors + imports stuck 'I' >15m | WMS | hourly, 24/7 |
-| `monitor_wave_health.py` | allocating waves stuck >2h; serial-completeness mismatches | WMS | hourly, ops hours |
+| `monitor_wave_health.py` | allocating waves stuck >2h; serial-completeness mismatches; stranded work-queue batches (alert-only) | WMS | hourly, ops hours |
 | `monitor_so_price_gap.py` | regional price-list propagation gap per region; day-over-day delta | ERP (B1/HANA) | daily, before the import |
 | `monitor_bot_health.py` | bot failure-rate breaches, stuck runs, scheduled-but-silent | RPA | daily |
 
