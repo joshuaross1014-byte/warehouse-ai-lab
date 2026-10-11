@@ -1,0 +1,5 @@
+anthropic>=1.13.0
+pyodbc>=5.0
+# optional, for search_knowledge semantic mode (keyword search works without them)
+# sentence-transformers
+# numpy

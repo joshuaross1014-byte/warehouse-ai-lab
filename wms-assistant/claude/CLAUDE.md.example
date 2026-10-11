@@ -1,0 +1,77 @@
+# WMS operating rules for Claude (Körber/HighJump Advantage WMS on SQL Server)
+
+<!-- Installed into %USERPROFILE%\.claude\CLAUDE.md so every Claude Code session reads it.
+     Operating rules live here; domain knowledge lives in the wms-knowledge skill. Replace the <placeholders>. -->
+
+## Servers (MCP registrations)
+
+| Name | Host | Default DB | What it is |
+|---|---|---|---|
+| `prod` | `<PROD_HOST>` | `<WMS_DB>` | **PRODUCTION** WMS |
+| `test` | `<TEST_HOST>` | `<WMS_DB>` | **TEST**. Free development |
+| `wms_memory` | local SQLite | | Memory bank: cached schema, proc bodies, past SQL, facts, write ledger |
+
+- If a result shows the production host, it is production, whatever the registration is called.
+- Other databases on the same instance are reached with three-part names: `REPOSITORY.dbo.t_app_field`, `KoerberOneCore.dbo....`.
+
+## Rule 1: confirm before any change on PRODUCTION
+
+- Never run INSERT / UPDATE / DELETE / MERGE / TRUNCATE / CREATE / ALTER / DROP / EXEC / GRANT on `prod` without my explicit OK for **that specific statement**. A PreToolUse hook forces a prompt on every PROD write and logs every write attempt. The hook is a seatbelt; my review is the real control.
+- Before asking: show the statement, SELECT the exact rows it will touch with their count, and say how to undo it.
+- Back up affected rows first: `SELECT * INTO dbo.bak_<topic>_<yyyymmdd> FROM ... WHERE ...`.
+- Wrap fixes: `BEGIN TRAN; <change>; <check counts>; COMMIT` (or ROLLBACK if counts are off).
+- After any write, read back from production to verify. Never from cache.
+- TEST writes are fine without asking. Say what you changed.
+
+Do **not** ask for confirmation on anything that does not change production: SELECTs, MCP setup and health checks, creating new local files, reading files, drafting SQL or documents.
+
+## Reading production
+
+- `WITH (NOLOCK)` on every `dbo.*` table read. The server does not add it for you.
+- TOP and date filters on large tables: `t_tran_log`, `t_pick_detail`, `t_stored_item`, `t_al_host_*`.
+- Column names differ between tables: `t_tran_log.start_tran_date` / `employee_id`, `t_order.order_date`, `t_receipt.receipt_date`, `t_al_host_order_master.record_create_date` + `error_msg`. When unsure, check `wms_memory` `schema(table)` or `sys.columns` first.
+- Prefer `get_object_definition` (or `wms_memory` `object`) over guessing what a proc does.
+
+## Lookup order: cache first, production for truth
+
+1. **Recall block** under the prompt (injected by the `wms_memory` hook). Read it first.
+2. **`wms_memory`** tools: `schema(table)`, `find_column`, `object(name, grep=)`, `recall(topic)`, `object_diff`, `drift(server)`, `changes`. Milliseconds, no load on the floor.
+3. **Live server** for current data, anything you are about to act on, verification after a write, or when a cached answer looks stale or surprising.
+
+Feeding `wms_memory`: when a query teaches something durable, call `remember(topic, fact, server=, source="q<id>")`. Never store counts or anything that changes daily. Tag deployment SQL with a `-- project: NAME` first line. After a deployment made outside the MCP (SSMS, Architect compile), run `drift(server)` so the new bodies become versions.
+
+## Architect (REPOSITORY) development
+
+- Build on TEST first. Stage with dry-run templates (`@commit = 0`, read the verification output, then `@commit = 1`). Set `@dev` to YOUR Architect developer code.
+- Run the pre-compile lint and fix every ERROR before I compile.
+- Compiler rules: description <= 100 chars, <= 37 labels per object, flat statements (no nested subqueries in `ISNULL((SELECT ...))`), quote parity. A silent abort after "Processing the Application" = bisect by revert.
+- Compile and Activate are mine (Architect GUI). Never say they are done until I confirm.
+- PROD: same script, in a maintenance window, after the TEST gun test passes, after checking that nobody has objects checked out.
+- Backups of REPOSITORY rows go to the WMS database; REPOSITORY datawriter cannot create tables.
+
+## Skills available
+
+- **`wms-knowledge`** (loads itself on WMS topics): the decoded domain. Eight reference files. Read the matching reference before answering a WMS behaviour question or designing a change.
+- Diagnostic runbooks (see claude-ops-toolkit): host order import failures, empty inbound PO, ERP vs WMS order drift, wave health.
+
+## WMS cheat sheet (details in the wms-knowledge references)
+
+- Codes: `t_order.status` N new / B waved or cancelled / S shipped / D done. `t_wave_master.status` N H A R. `t_stored_item.status` A H U (U = counted stock nobody released). Order `type_id` 31 sales, 32 transfer, plus site custom types. `t_hu_master.type` IV inventory, SO staged outbound, LO loaded.
+- Staging: receiving staging (default putaway target), inbound/flow-through staging (item-managed; an LPN there is a defect), outbound staging. Wave id = wh prefix + MMDDYY + seq from `AUTO_WAVE_GEN`.
+- Allocation runs at wave release at location + lot grain; RF only shows picks that have a `t_allocation` row. Profiles cascade FEFO rules; order-type overrides live in two engines.
+- The ERP re-exports open orders every few minutes; `import_status='E'` with "Picking has started" or "already added to wave" is benign. ERP transfer-request close is never sent to the WMS. Cancel in the WMS stamps `actual_ship_date`.
+- SQL traps: `t_tran_log.employee_id` (nvarchar) joins `t_employee.id`; `start_tran_time` is on a 1900-01-01 base (`elapsed_time` is right); `t_device`, `t_order.rush`, `t_receipt.vendor_code`, `t_location.stored_qty`, `t_work_q.employee_id`, `t_fwd_pick` are dead; collation is case-sensitive; the MCP wraps each call in a transaction (error 266 from self-committing procs; a late error rolls back an earlier ALTER).
+- Survival: a database restore keeps procs/tables/`t_whse_control` only. Agent jobs, REPOSITORY flows and web-page SQL must be re-applied from kits listed in reference 08.
+
+## Response standards
+
+- Lead with the answer. Object names, table and column references, explicit logic steps where they matter.
+- Analysis order: summary, logic walkthrough, inputs and outputs, risks (locking, NOLOCK, transaction scope, indexes, implicit conversions, anything touching inventory, allocation or shipping), recommendations.
+- Development: confirm target environment and naming first; inline comments explaining intent; list dependent objects; flag deployment order and rollback.
+- Professional tone. This is a work account.
+
+## Never
+
+- Put passwords, keys or tokens in files, commands or chat. Credentials come from user environment variables only.
+- Delete by ID prefix in REPOSITORY: vendor GUIDs can share a prefix. Delete by exact id or revision.
+- Use `t_device` or any `t_vo_*` / `usp_vo_*` object when voice is retired on the platform.
