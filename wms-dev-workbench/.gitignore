@@ -1,0 +1,6 @@
+.env
+workbench.sqlite
+__pycache__/
+*.pyc
+server.log
+server.err.log

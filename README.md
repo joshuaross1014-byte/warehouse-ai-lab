@@ -11,6 +11,7 @@ AI applied to warehouse and ERP operations — a portfolio of self-contained pro
 | [claude-ops-toolkit](claude-ops-toolkit/) | AI-assisted ERP+WMS ops toolkit: Claude Code diagnostic skills plus always-on Windows Task Scheduler monitors with Slack alerts (sanitized reference). |
 | [advantage-architect-mcp](advantage-architect-mcp/) | Develop a Körber/HighJump Advantage WMS's RF-gun screens, menus, and process flows directly in raw SQL over MCP — the reverse-engineered design-database object model, with Compile+Activate the only GUI step. |
 | [kore-ui-mcp](kore-ui-mcp/) | Inspect and edit the Körber (HJ One) WMS web UI over MCP, plus the read-only-inspect + apply-in-editor workflow for the legacy WebWise (Access) pages. |
+| [wms-dev-workbench](wms-dev-workbench/) | Three-layer developer workbench over a Körber/HighJump WMS on SQL Server: trace any order/item/pallet/wave end to end, browse schema and dependencies, hash-compare PROD vs TEST procs, guarded ad-hoc SQL. Flask + SQLAlchemy + plain JS, read-only on production by construction. |
 
 Most projects here were first developed in their own repository and merged with full commit history (`git log -- <project>/`).
 

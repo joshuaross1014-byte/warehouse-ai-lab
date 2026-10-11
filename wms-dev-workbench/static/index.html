@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WMS Dev Workbench</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">WMS Dev Workbench</div>
+  <nav class="tabs">
+    <button data-view="ops">Ops</button>
+    <button data-view="trace">Trace</button>
+    <button data-view="schema">Schema</button>
+    <button data-view="objects">Objects</button>
+    <button data-view="sql">SQL</button>
+    <button data-view="diff">Diff</button>
+  </nav>
+  <div class="profile">
+    <label>Profile</label>
+    <select id="profile"></select>
+    <span id="health" class="pill">…</span>
+  </div>
+</header>
+<main id="main"></main>
+<footer class="foot"><span id="status"></span></footer>
+<script src="/static/app.js"></script>
+</body>
+</html>
